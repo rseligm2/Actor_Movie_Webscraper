@@ -1,0 +1,31 @@
+from bs4 import BeautifulSoup
+from Graph import Graph
+from Actor import Actor
+import pprint
+import urllib3
+import unicodedata
+
+http = urllib3.PoolManager()
+
+url = 'https://en.wikipedia.org/wiki/Morgan_Freeman'
+response = http.request('GET', url)
+
+soup = BeautifulSoup(response.data, features="html.parser")
+filmdiv = soup.find("div", {"class": "div-col columns column-width"})
+biodiv = soup.find("table", {"class": "infobox biography vcard"})
+agestr = biodiv.find("span", {"class": "noprint ForceAgeToShow"}).text
+agestr = unicodedata.normalize('NFKD', agestr).encode('ascii','ignore')
+morgage = int(filter(str.isdigit, agestr))
+
+print(morgage)
+morgan = Actor("Morgan Freeman", morgage)
+
+
+edges = [("Morgan Freeman", "")]
+alldata = Graph(edges, directed = True)
+
+for i in soup.find_all('i'):
+    movietext = unicodedata.normalize('NFKD', i.text).encode('ascii', 'ignore')
+    alldata.add(morgan, movietext)
+
+print(alldata.getMovies(morgan))
