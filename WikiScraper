@@ -1,31 +1,80 @@
-from bs4 import BeautifulSoup
 from Graph import Graph
 from Actor import Actor
-import pprint
-import urllib3
-import unicodedata
+from Movie import Movie
+from MovieScrape import ActorScrape
+from MovieScrape import MovieScrape
+import time
+import jsonpickle
+import logging
 
-http = urllib3.PoolManager()
+then = time.time()
 
-url = 'https://en.wikipedia.org/wiki/Morgan_Freeman'
-response = http.request('GET', url)
-
-soup = BeautifulSoup(response.data, features="html.parser")
-filmdiv = soup.find("div", {"class": "div-col columns column-width"})
-biodiv = soup.find("table", {"class": "infobox biography vcard"})
-agestr = biodiv.find("span", {"class": "noprint ForceAgeToShow"}).text
-agestr = unicodedata.normalize('NFKD', agestr).encode('ascii','ignore')
-morgage = int(filter(str.isdigit, agestr))
-
-print(morgage)
-morgan = Actor("Morgan Freeman", morgage)
+logging.basicConfig(filename='crawler.log',level=logging.DEBUG, filemode='w')
 
 
-edges = [("Morgan Freeman", "")]
-alldata = Graph(edges, directed = True)
+actorscrape1 = ActorScrape("https://en.wikipedia.org/wiki/Morgan_Freeman")
+firstactor = actorscrape1.create_actor()
+firstmovies = actorscrape1.get_films()
 
-for i in soup.find_all('i'):
-    movietext = unicodedata.normalize('NFKD', i.text).encode('ascii', 'ignore')
-    alldata.add(morgan, movietext)
 
-print(alldata.getMovies(morgan))
+data = Graph()
+moviesneeded = 50
+actorsneeded = 50
+
+
+for movie in firstmovies:
+    data.addTo(firstactor, movie)
+
+    moviescrape = MovieScrape(movie)
+    actors = moviescrape.gettopactors()
+    for actor in actors:
+        data.addTo(actor, movie)
+        if data._nummovies > moviesneeded:
+            continue
+        if data._numactors > actorsneeded:
+            break
+        actorscrape = ActorScrape(actor._url)
+        newmovies = actorscrape.get_films()
+        for newmovie in newmovies:
+            if data._nummovies > moviesneeded:
+                break
+            data.addTo(actor, newmovie)
+            moviescrape2 = MovieScrape(newmovie)
+            actors3 = moviescrape2.gettopactors()
+            if actors3 == None:
+                continue
+            for actor2 in actors3:
+                if data._numactors > actorsneeded:
+                    break
+                data.addTo(newmovie, actor2)
+
+    if data._numactors > actorsneeded and data._nummovies > moviesneeded:
+        break
+# if data._numactors < actorsneeded:
+#     for node in data._nodes:
+#         if type(node) is Movie:
+#             movie = node
+#             moviescrape = MovieScrape(movie)
+#             actors = moviescrape.getcast()
+#             if(actors == None):
+#                 continue
+#             for actor in actors:
+#                 data.addTo(actor, movie)
+#                 if data._numactors > actorsneeded:
+#                     break
+#         if data._numactors > actorsneeded:
+#             break
+
+top10actors = data.gettopXoldactors(10)
+for actor in top10actors:
+    print(actor._name + " age:" + str(actor._age))
+
+
+jsonobj = jsonpickle.encode(data)
+jsonfile= open("mydata.json","w+")
+jsonfile.write(jsonobj)
+
+now = time.time() - then
+minutes = int(now/60)
+secondsleft = int(now%60)
+logging.info("Program finished in " + str(minutes) + " minutes and " + str(secondsleft) + " seconds")
