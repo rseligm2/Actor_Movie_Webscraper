@@ -11,17 +11,17 @@ then = time.time()
 
 logging.basicConfig(filename='crawler.log',level=logging.DEBUG, filemode='w')
 
-
+# get actor info and filmography for first actor
 actorscrape1 = ActorScrape("https://en.wikipedia.org/wiki/Morgan_Freeman")
 firstactor = actorscrape1.create_actor()
 firstmovies = actorscrape1.get_films()
 
 
 data = Graph()
-moviesneeded = 50
-actorsneeded = 50
+moviesneeded = 125
+actorsneeded = 250
 
-
+# loop through first actor's movies, the movies' actors, and those actors' movies until minimum reached
 for movie in firstmovies:
     data.addTo(firstactor, movie)
 
@@ -50,20 +50,7 @@ for movie in firstmovies:
 
     if data._numactors > actorsneeded and data._nummovies > moviesneeded:
         break
-# if data._numactors < actorsneeded:
-#     for node in data._nodes:
-#         if type(node) is Movie:
-#             movie = node
-#             moviescrape = MovieScrape(movie)
-#             actors = moviescrape.getcast()
-#             if(actors == None):
-#                 continue
-#             for actor in actors:
-#                 data.addTo(actor, movie)
-#                 if data._numactors > actorsneeded:
-#                     break
-#         if data._numactors > actorsneeded:
-#             break
+
 
 top10actors = data.gettopXoldactors(10)
 for actor in top10actors:

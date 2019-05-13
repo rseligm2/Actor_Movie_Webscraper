@@ -19,7 +19,7 @@ class MovieScrape:
     def __init__(self, Movie):
         self._Movie = Movie
 
-    #get gross and film year
+    # get gross box office and film year for given movie
     def updatemovieinfo(self):
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         try:
@@ -81,6 +81,7 @@ class MovieScrape:
         self._Movie.setyear(datetext)
         logging.info("Updated " + self._Movie._name)
 
+    # get actors starring in given film
     def gettopactors(self):
 
         listelements = self.getstarringlist()
@@ -104,6 +105,7 @@ class MovieScrape:
 
         return actors
 
+    # get list of actors from starring section in wikipedia page
     def getstarringlist(self):
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         try:
@@ -175,8 +177,6 @@ class MovieScrape:
     #     return actors
 
 
-
-
 class ActorScrape:
 
     checkedlinks = []
@@ -184,8 +184,9 @@ class ActorScrape:
     def __init__(self, url):
         self._url = url
 
+    # get actor information from actor object with url
     def create_actor(self):
-        #get url
+        # get url
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         try:
             response = http.request('GET', self._url)
@@ -201,7 +202,8 @@ class ActorScrape:
                 return
         logging.info("Getting actor info from " + self._url)
         self.checkedlinks.append(self._url)
-        #extract div with filmograhy and bio div and create actor object
+
+        # extract div with filmograhy and bio div and create actor object
         biodiv = soup.find("table", {"class": "infobox biography vcard"})
         if biodiv == None:
             biodiv = soup.find("table", {"class": "infobox vcard"})
@@ -224,6 +226,7 @@ class ActorScrape:
         logging.info("created " + str(actor))
         return actor
 
+    # get filmography of actor
     def get_films(self):
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         try:
@@ -237,6 +240,7 @@ class ActorScrape:
         filmography = soup.find("div", {"class": "div-col columns column-width"})
         movies = []
         if filmography == None:
+            # if filmography not in first div, check if its in a table
             filmography = self.getfilmstable()
             if filmography == None:
                 logging.warning("Couldn't find filmography")
@@ -251,6 +255,7 @@ class ActorScrape:
                 continue
 
             linktext = "https://en.wikipedia.org" + linktext
+            # create movie objects for filmography
             movie = Movie(moviename, linktext)
             moviescrape = MovieScrape(movie)
             moviescrape.updatemovieinfo()
@@ -258,6 +263,7 @@ class ActorScrape:
 
         return movies
 
+    # method to get filmography table
     def getfilmstable(self):
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         try:

@@ -5,8 +5,8 @@ import logging
 
 logging.basicConfig(filename='crawler.log',level=logging.DEBUG, format='%(asctime)s %(message)s', filemode='w+')
 
-class Graph:
 
+class Graph:
 
     def __init__(self):
         self._nodes = {}
@@ -15,6 +15,7 @@ class Graph:
         self._actornodes = []
         self._movienodes = []
 
+    # add node to graph, add to list of nodes of specific type
     def addNode(self, newnodeobj):
         newnode = Node(newnodeobj)
         if type(newnodeobj) is Actor:
@@ -26,6 +27,7 @@ class Graph:
         logging.info("Added " + str(newnodeobj) + " to graph")
         self._nodes[newnodeobj] = newnode
 
+    # if node not in graph add it, otherwise just add edges between nodes
     def addTo(self, add1, add2):
         if add1 not in self._nodes:
             self.addNode(add1)
@@ -34,19 +36,13 @@ class Graph:
         self._nodes[add1].addEdge(self._nodes[add2])
         self._nodes[add2].addEdge(self._nodes[add1])
 
-    # def checkduplicate(self, obj):
-    #     for check in self._nodes:
-    #         if(obj._name == check._name):
-    #             print("Found duplicate")
-    #             return True
-    #     return False
-
     def __str__(self):
         string = ""
         for node in self._nodes:
             string += str(node) + ' '
         return string
 
+    # get top x highest grossing actors
     def gettopXgrossactors(self, num):
         topactors = {}
         for node in self._nodes:
@@ -55,6 +51,7 @@ class Graph:
         sortedactors = sorted(topactors, key=topactors.__getitem__, reverse=True)
         return sortedactors[:num]
 
+    # get top x oldest actors
     def gettopXoldactors(self, num):
         topactors = {}
         for node in self._nodes:
@@ -63,6 +60,7 @@ class Graph:
         sortedactors = sorted(topactors, key=topactors.__getitem__, reverse=True)
         return sortedactors[:num]
 
+    # get all movies from a given year
     def moviesfromyear(self, year):
         movies = []
         for node in self._nodes:
@@ -70,6 +68,7 @@ class Graph:
                 movies.append(node)
         return movies
 
+    # get all actors born in a given year
     def actorsbornyear(self, year):
         actors = []
         theage = 2019 - year
@@ -78,6 +77,7 @@ class Graph:
                 actors.append(node)
         return actors
 
+    # return actor by name
     def getactor(self, name):
         for actor in self._actornodes:
             if actor._object._name == name:
@@ -86,6 +86,7 @@ class Graph:
         logging.warning("Couldn't find actor: " + name)
         return None
 
+    # return movie by name
     def getmovie(self, name):
         for movie in self._movienodes:
             if movie._object._name == name:
@@ -94,6 +95,7 @@ class Graph:
         logging.warning("Couldn't find movie: " + name)
         return None
 
+    # return actors filtered by given attributes
     def getfilteractors(self, name, age):
         actors = []
         for actor in self._actornodes:
@@ -119,6 +121,7 @@ class Graph:
         else:
             return actors
 
+    # return movies filtered by given attributes
     def getfiltermovies(self, name, year):
         movies = []
         for movie in self._movienodes:
@@ -144,11 +147,14 @@ class Graph:
         else:
             return movies
 
+
 class Node:
+
     def __init__(self, obj):
         self._object = obj
         self._edges = {}
 
+    # add edge and weight between self node and node2
     def addEdge(self, node2):
         if type(self._object) is Actor:
             weight = self._object._age * node2._object._gross
@@ -165,6 +171,7 @@ class Node:
         string = str(self._object)
         return string
 
+    # return edges
     def getconnections(self):
         return self._edges
 
